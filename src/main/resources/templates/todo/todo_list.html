@@ -5,13 +5,19 @@
 <body style="background: azure">
 <div class="container">
     <div class="row">
-        <div class="col-md-6 offset-3">
-            <a href="/add" class="btn btn-success">+ Add</a>
+        <div class="col-md-6 offset-3 pt-5">
+            <form class="mb-2">
+                <input class="form-control" name="filter" id="filter" type="search" placeholder="Search"
+                       aria-label="Search">
+            </form>
+
+            <a href="/add" class="btn btn-success mb-2">+ Add</a>
             <table class="table">
                 <thead>
                 <tr class="table-header">
                     <th>#</th>
                     <th>Title</th>
+                    <th>Priority</th>
                     <th>Action</th>
                 </tr>
                 </thead>
@@ -19,11 +25,17 @@
                 <tr>
                     <td>
                         <div class="form-check">
-                            <input class="form-check-input" th:checked="${todo.completed}" type="checkbox" value="" id="priority">
+                            <input class="form-check-input"
+                                   th:checked="${todo.completed}"
+                                   type="checkbox"
+                                   id="priority"
+                                   th:onclick="update([[${todo.id}]])"
+                            >
                         </div>
                     </td>
-<!--                    <td th:text="${step.count}"></td>-->
+                    <!--                    <td th:text="${step.count}"></td>-->
                     <td th:text="${todo.title}"></td>
+                    <td th:text="${todo.priority}"></td>
                     <td>
                         <a th:href="@{'/delete/'+${todo.id}}" class="btn btn-danger">Delete</a> ||
                         <a th:href="@{'/update/'+${todo.id}}" class="btn btn-info">Update</a>
@@ -35,6 +47,26 @@
         </div>
     </div>
 </div>
+
+<script type="application/javascript">
+    function update(id) {
+        console.log(id)
+        fetch("http://localhost:8080/update-completed/" + id, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+        })
+    }
+
+    /*const selectElement = document.getElementById('filter');
+    selectElement.addEventListener('keyup', (event) => {
+        let url = window.location.href;
+        window.location.href = url + event.target.value;
+    });
+    */
+</script>
 <section th:include="fragments.html :: js_files"></section>
 </body>
 </html>

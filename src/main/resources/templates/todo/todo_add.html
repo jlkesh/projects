@@ -15,9 +15,9 @@
         <div class="form-group">
           <label for="priority">Priority</label>
           <select class="form-control" name="priority" id="priority">
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
+            <option th:each="priority : ${priorities}"
+                    th:text="${priority.getValue()}"
+                    th:value="${priority.name}">
           </select>
         </div>
         <button type="submit" class="btn btn-primary">Save</button>
