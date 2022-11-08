@@ -9,16 +9,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.stylesheets.LinkStyle;
 
 import javax.annotation.Priority;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Supplier;
 
 @SpringBootApplication
 public class TodoAppApplication {
@@ -82,6 +80,34 @@ record TodoController(TodoService todoService) {
         todoService.create(todo);
         return "redirect:/";
     }
+
+    @GetMapping("/delete/{id}")
+    public String todoDeletePage(Model model, @PathVariable Integer id) {
+        Todo todo = todoService.get(id);
+        model.addAttribute("id", todo.getId());
+        model.addAttribute("title", todo.getTitle());
+        return "todo/todo_delete";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteTodo(@PathVariable Integer id) {
+        todoService.delete(id);
+        return "redirect:/";
+    }
+
+    @GetMapping("/update/{id}")
+    public String todoUpdatePage(Model model, @PathVariable Integer id) {
+        Todo todo = todoService.get(id);
+        model.addAttribute("todo", todo);
+        return "todo/todo_update";
+    }
+
+    @PostMapping("/update/{id}")
+    public String updateTodo(@ModelAttribute Todo todo, @PathVariable Integer id) {
+        todo.setId(id);
+        todoService.create(todo);
+        return "redirect:/";
+    }
 }
 
 @Service
@@ -92,6 +118,15 @@ record TodoService(TodoRepository todoRepository) {
 
     public List<Todo> getAll() {
         return todoRepository.findAll();
+    }
+
+    public Todo get(@NonNull Integer id) {
+        Supplier<RuntimeException> supplier = () -> new RuntimeException("Todo not found");
+        return todoRepository.findById(id).orElseThrow(supplier);
+    }
+
+    public void delete(@NonNull Integer id) {
+        todoRepository.deleteById(id);
     }
 }
 

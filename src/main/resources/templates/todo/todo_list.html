@@ -10,16 +10,23 @@
             <table class="table">
                 <thead>
                 <tr class="table-header">
-                    <td>#</td>
-                    <td>Title</td>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Action</th>
                 </tr>
                 </thead>
-                <tbody th:each="todo : ${todos}">
+                <tbody th:each="todo, step : ${todos}">
                 <tr>
-                    <td th:text="${todo.id}"></td>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" th:checked="${todo.completed}" type="checkbox" value="" id="priority">
+                        </div>
+                    </td>
+<!--                    <td th:text="${step.count}"></td>-->
                     <td th:text="${todo.title}"></td>
                     <td>
-                        <a th:href="@{'/delete/'+${todo.id}}" class="btn btn-danger">Delete</a>
+                        <a th:href="@{'/delete/'+${todo.id}}" class="btn btn-danger">Delete</a> ||
+                        <a th:href="@{'/update/'+${todo.id}}" class="btn btn-info">Update</a>
                     </td>
                 </tr>
                 </tbody>
