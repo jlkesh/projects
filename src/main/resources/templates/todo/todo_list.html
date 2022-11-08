@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:include="fragments.html :: header('Todo List')">
+</head>
+<body style="background: azure">
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-3">
+            <a href="/add" class="btn btn-success">+ Add</a>
+            <table class="table">
+                <thead>
+                <tr class="table-header">
+                    <td>#</td>
+                    <td>Title</td>
+                </tr>
+                </thead>
+                <tbody th:each="todo : ${todos}">
+                <tr>
+                    <td th:text="${todo.id}"></td>
+                    <td th:text="${todo.title}"></td>
+                    <td>
+                        <a th:href="@{'/delete/'+${todo.id}}" class="btn btn-danger">Delete</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+<section th:include="fragments.html :: js_files"></section>
+</body>
+</html>
