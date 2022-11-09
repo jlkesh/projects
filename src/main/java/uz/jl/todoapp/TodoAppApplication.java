@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,7 +21,9 @@ import org.w3c.dom.stylesheets.LinkStyle;
 
 import javax.annotation.Priority;
 import javax.persistence.*;
+import javax.swing.text.View;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -80,9 +85,12 @@ class Todo {
 @CrossOrigin("*")
 record TodoController(TodoService todoService) {
     @GetMapping
-    public String todoListPage(Model model, @RequestParam(required = false, name = "filter") String searchFilter) {
+    public String todoListPage(Model model,
+                               @RequestParam(required = false, name = "filter") String searchFilter,
+                               @RequestParam(required = false, name = "page", defaultValue = "0") int page,
+                               @RequestParam(required = false, name = "size", defaultValue = "2") int size) {
         log.info(searchFilter);
-        model.addAttribute("todos", todoService.getAll(searchFilter));
+        model.addAttribute("page", todoService.findPageable(page, size, searchFilter));
         return "todo/todo_list";
     }
 
@@ -130,7 +138,7 @@ record TodoController(TodoService todoService) {
 
     @PostMapping("/update-completed/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void completeTodo( @PathVariable Integer id) {
+    public void completeTodo(@PathVariable Integer id) {
         Todo todo = todoService.get(id);
         todo.setCompleted(!todo.isCompleted());
         todoService.create(todo);
@@ -161,17 +169,45 @@ record TodoService(TodoRepository todoRepository) {
             return todoRepository.findAllByTitleContains(searchFilter);
         return todoRepository.findAll();
     }
+
+    public ViewPage findPageable(int page, int size, String searchFilter) {
+        Pageable pageable = PageRequest.of(page, size);
+        List<Todo> todos = todoRepository.findPageable(searchFilter, pageable);
+        int pageCount = todoRepository.findAll().size();
+        System.out.println(pageCount);
+        pageCount = pageCount / size + (pageCount % size == 0 ? -1 : 0);
+        System.out.println(pageCount);
+        return ViewPage.builder()
+                .todos(todos)
+                .pageCount(pageCount)
+                .hasPrevious(page != 0)
+                .hasNext(page != pageCount)
+                .current(page)
+                .build();
+    }
 }
 
 interface TodoRepository extends JpaRepository<Todo, Integer> {
 
     @Query("from Todo t where t.title like %:filter%")
     List<Todo> findAllByTitleContains(@Param("filter") String filter);
+
+
+    @Query("from Todo t  where t.title like %:filter%")
+    List<Todo> findPageable(@Param("filter") String filter, Pageable pageable);
 }
 
 // -------------------------------------------------------------------------
-record MailService() {
-}
 
-record TemplateGeneratorService() {
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+class ViewPage {
+    private int pageCount;
+    private List<Todo> todos;
+    private boolean hasPrevious;
+    private boolean hasNext;
+    private int current;
 }

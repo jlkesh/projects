@@ -21,7 +21,7 @@
                     <th>Action</th>
                 </tr>
                 </thead>
-                <tbody th:each="todo, step : ${todos}">
+                <tbody th:each="todo, step : ${page.getTodos()}">
                 <tr>
                     <td>
                         <div class="form-check">
@@ -43,7 +43,21 @@
                 </tr>
                 </tbody>
             </table>
+            <nav aria-label="...">
+                <ul class="pagination">
+                    <li class="page-item" th:if="${page.isHasPrevious()}">
+                        <a class="page-link" th:href="@{'?page='+${page.getCurrent() - 1}}" tabindex="-1">Previous</a>
+                    </li>
 
+                    <li class="page-item" th:classappend="${page.getCurrent() == star} ? active : ''" th:each="star:${#numbers.sequence(0,page.getPageCount())}">
+                        <a class="page-link" th:href="@{'?page='+${star}}" th:text="${star} + 1"></a>
+                    </li>
+
+                    <li class="page-item" th:if="${page.isHasNext() }">
+                        <a class="page-link" th:href="@{'?page='+${page.getCurrent() + 1}}">Next</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
