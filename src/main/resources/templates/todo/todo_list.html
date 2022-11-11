@@ -6,11 +6,6 @@
 <div class="container">
     <div class="row">
         <div class="col-md-6 offset-3 pt-5">
-            <form class="mb-2">
-                <input class="form-control" name="filter" id="filter" type="search" placeholder="Search"
-                       aria-label="Search">
-            </form>
-
             <a href="/add" class="btn btn-success mb-2">+ Add</a>
             <table class="table">
                 <thead>
@@ -21,7 +16,7 @@
                     <th>Action</th>
                 </tr>
                 </thead>
-                <tbody th:each="todo, step : ${page.getTodos()}">
+                <tbody th:each="todo, step : ${page.getContent()}">
                 <tr>
                     <td>
                         <div class="form-check">
@@ -43,21 +38,24 @@
                 </tr>
                 </tbody>
             </table>
-            <nav aria-label="...">
+
+
+            <nav aria-label="..." th:if="${page.getTotalPages() > 0}">
                 <ul class="pagination">
-                    <li class="page-item" th:if="${page.isHasPrevious()}">
-                        <a class="page-link" th:href="@{'?page='+${page.getCurrent() - 1}}" tabindex="-1">Previous</a>
+                    <li class="page-item" th:if="${page.hasPrevious()}">
+                        <a class="page-link" th:href="@{'?page=' + ${page.number - 1}}" tabindex="-1">Previous</a>
                     </li>
 
-                    <li class="page-item" th:classappend="${page.getCurrent() == star} ? active : ''" th:each="star:${#numbers.sequence(0,page.getPageCount())}">
-                        <a class="page-link" th:href="@{'?page='+${star}}" th:text="${star} + 1"></a>
+                    <li class="page-item" th:each="pageNumber : ${#numbers.sequence(1, page.getTotalPages())}"
+                        th:classappend="${pageNumber==page.number + 1} ? active">
+                        <a class="page-link" th:href="@{'?page=' + ${pageNumber - 1}}" th:text="${pageNumber}"></a>
                     </li>
-
-                    <li class="page-item" th:if="${page.isHasNext() }">
-                        <a class="page-link" th:href="@{'?page='+${page.getCurrent() + 1}}">Next</a>
+                    <li class="page-item" th:if="${page.hasNext()}">
+                        <a class="page-link" th:href="@{'?page=' + ${page.number + 1}}">Next</a>
                     </li>
                 </ul>
             </nav>
+
         </div>
     </div>
 </div>
@@ -73,13 +71,6 @@
             },
         })
     }
-
-    /*const selectElement = document.getElementById('filter');
-    selectElement.addEventListener('keyup', (event) => {
-        let url = window.location.href;
-        window.location.href = url + event.target.value;
-    });
-    */
 </script>
 <section th:include="fragments.html :: js_files"></section>
 </body>

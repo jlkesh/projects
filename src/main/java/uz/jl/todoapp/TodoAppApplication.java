@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +15,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
@@ -86,11 +93,10 @@ class Todo {
 record TodoController(TodoService todoService) {
     @GetMapping
     public String todoListPage(Model model,
-                               @RequestParam(required = false, name = "filter") String searchFilter,
                                @RequestParam(required = false, name = "page", defaultValue = "0") int page,
                                @RequestParam(required = false, name = "size", defaultValue = "2") int size) {
-        log.info(searchFilter);
-        model.addAttribute("page", todoService.findPageable(page, size, searchFilter));
+        Page<Todo> pageable = todoService.findPageable(page, size);
+        model.addAttribute("page", pageable);
         return "todo/todo_list";
     }
 
@@ -170,20 +176,9 @@ record TodoService(TodoRepository todoRepository) {
         return todoRepository.findAll();
     }
 
-    public ViewPage findPageable(int page, int size, String searchFilter) {
+    public Page<Todo> findPageable(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        List<Todo> todos = todoRepository.findPageable(searchFilter, pageable);
-        int pageCount = todoRepository.findAll().size();
-        System.out.println(pageCount);
-        pageCount = pageCount / size + (pageCount % size == 0 ? -1 : 0);
-        System.out.println(pageCount);
-        return ViewPage.builder()
-                .todos(todos)
-                .pageCount(pageCount)
-                .hasPrevious(page != 0)
-                .hasNext(page != pageCount)
-                .current(page)
-                .build();
+        return todoRepository.findAll(pageable);
     }
 }
 
@@ -195,6 +190,7 @@ interface TodoRepository extends JpaRepository<Todo, Integer> {
 
     @Query("from Todo t  where t.title like %:filter%")
     List<Todo> findPageable(@Param("filter") String filter, Pageable pageable);
+
 }
 
 // -------------------------------------------------------------------------
@@ -210,4 +206,28 @@ class ViewPage {
     private boolean hasPrevious;
     private boolean hasNext;
     private int current;
+}
+
+
+// ------------------------SECURITY------------------------------
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
+class SecurityConfigurer {
+
+    public static final String[] WHITE_LIST = {"/auth/login", "/auth/register"};
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeRequests()
+                .antMatchers(WHITE_LIST).permitAll()
+                .anyRequest()
+                .authenticated();
+
+        http.formLogin();
+
+        return http.build();
+    }
+
 }
