@@ -225,9 +225,24 @@ class SecurityConfigurer {
                 .anyRequest()
                 .authenticated();
 
-        http.formLogin();
+        http.formLogin()
+                .defaultSuccessUrl("/", false)
+                .loginPage("/auth/login")
+                .loginProcessingUrl("/auth/login");
 
         return http.build();
     }
 
+}
+// ----------------------------------------------------------------------------------------------------------------------------------------
+
+
+@Controller
+@RequestMapping("/auth")
+class AuthController {
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "/auth/login";
+    }
 }
