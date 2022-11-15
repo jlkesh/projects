@@ -233,7 +233,7 @@ class SecurityConfigurer {
                 .anyRequest()
                 .authenticated();
 
-        http.csrf().disable();
+//        http.csrf().disable();
 
         http.formLogin()
                 .defaultSuccessUrl("/", false)
