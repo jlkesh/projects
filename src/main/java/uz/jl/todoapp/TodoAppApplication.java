@@ -3,6 +3,7 @@ package uz.jl.todoapp;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -15,40 +16,45 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.w3c.dom.stylesheets.LinkStyle;
 
-import javax.annotation.Priority;
 import javax.persistence.*;
-import javax.swing.text.View;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 @SpringBootApplication
-public class TodoAppApplication {
+@RequiredArgsConstructor
+public class TodoAppApplication implements CommandLineRunner {
+    final UserRepository userRepository;
+    final PasswordEncoder passwordEncoder;
 
     public static void main(String[] args) {
         SpringApplication.run(TodoAppApplication.class, args);
     }
 
+    @Override
+    public void run(String... args) throws Exception {
+//        userRepository.save(Users.builder()
+//                .username("jl")
+//                .password(passwordEncoder.encode("123"))
+//                .role("USER")
+//                .build());
+    }
 }
 
 
@@ -233,8 +239,6 @@ class SecurityConfigurer {
                 .anyRequest()
                 .authenticated();
 
-//        http.csrf().disable();
-
         http.formLogin()
                 .defaultSuccessUrl("/", false)
                 .loginPage("/auth/login")
@@ -243,28 +247,90 @@ class SecurityConfigurer {
         return http.build();
     }
 
-
     @Bean
-    public InMemoryUserDetailsManager detailsManager() {
-        UserDetails user = User.withDefaultPasswordEncoder()
-                .username("user")
-                .password("123")
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(user);
-
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
 }
 // ----------------------------------------------------------------------------------------------------------------------------------------
 
+@Service
+class AuthService implements UserDetailsService {
+    final PasswordEncoder passwordEncoder;
+    final UserRepository userRepository;
+
+    AuthService(PasswordEncoder passwordEncoder, UserRepository userRepository) {
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
+        return User.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .authorities(user.getAuthority())
+                .build();
+    }
+
+    public void createUser(Users users) {
+        users.setPassword(passwordEncoder.encode(users.getPassword()));
+        userRepository.save(users);
+    }
+}
+
+
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
+class Users implements GrantedAuthority {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    private String role;
+
+    @Override
+    public String getAuthority() {
+        return "ROLE_" + role;
+    }
+}
+
+interface UserRepository extends JpaRepository<Users, Integer> {
+    Optional<Users> findByUsername(String username);
+}
 
 @Controller
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 class AuthController {
+    private final AuthService authService;
 
     @GetMapping("/login")
     public String loginPage() {
         return "/auth/login";
+    }
+
+    @GetMapping("/register")
+    public String registerPage() {
+        return "/auth/register";
+    }
+
+    @PostMapping("/register")
+    public String register(@ModelAttribute Users users) {
+        users.setRole("USER");
+        authService.createUser(users);
+        return "redirect:/auth/login";
     }
 }
