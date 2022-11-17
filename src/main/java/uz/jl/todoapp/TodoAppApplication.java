@@ -288,7 +288,7 @@ class AuthService implements UserDetailsService {
 @AllArgsConstructor
 @Builder
 @Data
-class Users implements GrantedAuthority {
+class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -301,10 +301,6 @@ class Users implements GrantedAuthority {
 
     private String role;
 
-    @Override
-    public String getAuthority() {
-        return "ROLE_" + role;
-    }
 }
 
 interface UserRepository extends JpaRepository<Users, Integer> {
