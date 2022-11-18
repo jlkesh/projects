@@ -14,17 +14,32 @@
 
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="john">
+                    <input type="text"
+                           class="form-control"
+                           id="username"
+                           name="username"
+                           th:value="${username}"
+                           placeholder="john">
+                    <small th:if="${error_message_for_username}" class="form-error-message" th:text="${error_message_for_username}"></small>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" class="form-control" id="password" name="password">
+                    <input type="password"
+                           class="form-control"
+                           id="password"
+                           th:value="${password}"
+                           name="password">
+                    <small th:if="${error_message_for_password}" class="form-error-message" th:text="${error_message_for_password}"></small>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password</label>
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password">
-                </div>
+                    <input type="password"
+                           class="form-control"
+                           id="confirm_password"
+                           th:value="${confirmPassword}"
+                           name="confirmPassword">
+                    <small th:if="${error_message_for_password}" class="form-error-message" th:text="${error_message_for_password}"></small>                </div>
                 <button type="submit" class="btn btn-success">Save</button>
                 <a href="/auth/login" class="btn btn-primary">Login</a>
             </form>
